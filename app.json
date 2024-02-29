@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "quatum",
+    "name": "NT",
     "slug": "quatum",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.quatum"
+      "package": "me.pnsrc89.nt"
     },
     "web": {
       "bundler": "metro",

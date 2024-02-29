@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, TextInput } from 'react-native';
+import { Modal, View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Updates from 'expo-updates';
 
 const Dialogs = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [groups, setGroups] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [debugInfo, setDebugInfo] = useState('');
+  const [versionInfo, setVersionInfo] = useState('');
 
   useEffect(() => {
     async function fetchSelectedGroup() {
       try {
         const value = await AsyncStorage.getItem('selectedGroup');
-        logDebugInfo('AsyncStorage value:', value);
         if (value) {
           setSelectedGroup(JSON.parse(value));
         } else {
           setIsVisible(true);
         }
       } catch (error) {
-        logDebugInfo('Error reading selected group from AsyncStorage:', error);
+        console.error('Error reading selected group from AsyncStorage:', error);
       }
     }
 
@@ -30,10 +30,22 @@ const Dialogs = () => {
   useEffect(() => {
     if (selectedGroup) {
       AsyncStorage.setItem('selectedGroup', JSON.stringify(selectedGroup))
-        .then(() => logDebugInfo('Selected group saved successfully'))
-        .catch(error => logDebugInfo('Error saving selected group:', error));
+        .catch(error => console.error('Error saving selected group:', error));
     }
   }, [selectedGroup]);
+
+  useEffect(() => {
+    async function fetchAppVersion() {
+      try {
+        const version = await Updates.getVersionAsync();
+        setVersionInfo(`Версия: ${version}`);
+      } catch (error) {
+        console.error('Error fetching app version:', error);
+      }
+    }
+
+    fetchAppVersion();
+  }, []);
 
   const toggleModal = () => {
     setIsVisible(!isVisible);
@@ -52,7 +64,7 @@ const Dialogs = () => {
       const data = await response.json();
       setGroups(data);
     } catch (error) {
-      logDebugInfo('Error searching for groups:', error);
+      console.error('Error searching for groups:', error);
     }
   };
 
@@ -62,14 +74,20 @@ const Dialogs = () => {
     try {
       await AsyncStorage.setItem('selectedGroup', JSON.stringify(group));
       Alert.alert('Успех', `Ваша группа обновлена: ${group.label}`);
+      Updates.reloadAsync();
     } catch (error) {
-      logDebugInfo('Error saving selected group:', error);
+      console.error('Error saving selected group:', error);
     }
   };
 
-  const logDebugInfo = (...args) => {
-    const newDebugInfo = args.join(' ');
-    setDebugInfo(prevDebugInfo => prevDebugInfo + '\n' + newDebugInfo);
+  const clearStorage = async () => {
+    try {
+      await AsyncStorage.clear();
+      setSelectedGroup(null);
+      Alert.alert('Успех', 'Хранилище успешно очищено');
+    } catch (error) {
+      console.error('Error clearing AsyncStorage:', error);
+    }
   };
 
   return (
@@ -77,10 +95,10 @@ const Dialogs = () => {
       <TouchableOpacity onPress={toggleModal} style={styles.button}>
         <Text>{selectedGroup ? selectedGroup.label : "Выберите свою группу"}</Text>
       </TouchableOpacity>
-      <Text>Далее информация которая собирается в процессе работы приложения</Text>
-      <ScrollView style={styles.debugContainer}>
-        <Text>{debugInfo}</Text>
-      </ScrollView>
+      <TouchableOpacity onPress={clearStorage} style={styles.button}>
+        <Text>Очистить хранилище</Text>
+      </TouchableOpacity>
+
       <Modal
         visible={isVisible}
         transparent={true}
@@ -109,6 +127,12 @@ const Dialogs = () => {
           </View>
         </View>
       </Modal>
+
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>{versionInfo}</Text>
+        <Text style={styles.footerText}>NT</Text>
+        <Text style={styles.footerText}>made by pnsrc with ❤</Text>
+      </View>
     </View>
   );
 };
@@ -118,14 +142,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  debugContainer: {
-    maxHeight: 100,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 20,
   },
   button: {
     borderRadius: 6,
@@ -170,9 +186,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     paddingVertical: 10,
   },
-  selectedGroupText: {
-    fontSize: 18,
-    marginTop: 20,
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#eee',
+    padding: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#333',
   },
 });
 

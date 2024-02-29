@@ -31,27 +31,13 @@ export default function TabLayout() {
         options={{
           title: 'Расписание',
           tabBarIcon: ({ color }) => <TabBarIcon name="book" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable>
-                {({ pressed }) => (
-                  <FontAwesome
-                    name="warning"
-                    size={25}
-                    color={Colors[colorScheme ?? 'light'].text}
-                    style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
         }}
       />
       <Tabs.Screen
         name="note"
         options={{
-          title: 'Заметки',
-          tabBarIcon: ({ color }) => <TabBarIcon name="gear" color={color} />,
+          title: '',
+          tabBarIcon: ({ color }) => <TabBarIcon name="sticky-note" color={color} />,
         }}
       />
       <Tabs.Screen

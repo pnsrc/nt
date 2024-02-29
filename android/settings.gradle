@@ -1,4 +1,4 @@
-rootProject.name = 'quatum'
+rootProject.name = 'NT'
 
 dependencyResolutionManagement {
   versionCatalogs {

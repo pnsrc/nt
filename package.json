@@ -7,6 +7,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "easdep": "eas build -p android --profile preview",
     "test": "jest --watchAll"
   },
   "jest": {
@@ -23,12 +24,15 @@
     "appcenter-analytics": "5.0.1",
     "appcenter-crashes": "5.0.1",
     "expo": "~50.0.8",
+    "expo-blur": "^12.9.2",
+    "expo-document-picker": "^11.10.1",
     "expo-font": "~11.10.3",
     "expo-linking": "~6.2.2",
     "expo-router": "~3.4.7",
     "expo-splash-screen": "~0.26.4",
     "expo-status-bar": "~1.11.1",
     "expo-system-ui": "~2.9.3",
+    "expo-updates": "^0.24.11",
     "expo-web-browser": "~12.8.2",
     "lottie-react-native": "6.5.1",
     "react": "18.2.0",
@@ -38,6 +42,8 @@
     "react-native-gesture-handler": "^2.15.0",
     "react-native-safe-area-context": "4.8.2",
     "react-native-screens": "~3.29.0",
+    "react-native-swipeout": "^2.3.6",
+    "react-native-vector-icons": "^10.0.3",
     "react-native-web": "~0.19.6"
   },
   "devDependencies": {

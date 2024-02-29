@@ -5,6 +5,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
+import ModalScreen from '../EditModal'; // импортируем компонент модального окна
 
 const WeeklySchedule = () => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -16,6 +17,28 @@ const WeeklySchedule = () => {
   const [currentWeek, setCurrentWeek] = useState(moment().isoWeek());
   
   const [startOfWeek, setStartOfWeek] = useState(moment().startOf('isoWeek'));
+
+  const [modalGuid, setModalGuid] = useState('');
+  const [lessonDate, setLessonDate] = useState('');
+  const [lessonName, setLessonName] = useState('');
+  const [notes, setNotes] = useState([]); // Объявляем переменную notes с помощью useState
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [auditoriumGUID, setAuditoriumGUID] = useState(null); // Добавляем состояние для auditoriumGUID
+
+  const openModal = useCallback((guid, date, name) => {
+    setModalGuid(guid); // Устанавливаем новый guid для модального окна
+    setLessonDate(date); // Устанавливаем дату урока в модальном окне
+    setLessonName(name); // Устанавливаем название урока в модальном окне
+    setIsModalVisible(true); // Открываем модальное окно
+  }, []);
+
+  const closeModal = () => {
+    setIsModalVisible(false);
+    setModalGuid(''); // Обнуляем guid при закрытии модального окна
+    setLessonDate('');
+    setLessonName('');
+  };
 
   const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
@@ -38,6 +61,12 @@ const WeeklySchedule = () => {
       }
     });
   }, []);
+
+  const hasNote = useCallback((lessonGuid) => {
+    const guid = lesson.auditoriumGUID + '_' + lesson.kindOfWork + '_' + lesson.date + '_' + lesson.beginLesson;
+    return notes.some(note => note.guid === lessonGuid);
+  }, [notes]);
+
   
 
   useEffect(() => {
@@ -61,7 +90,7 @@ const WeeklySchedule = () => {
   const handleDayButtonClick = async (day) => {
     if (!groupId) {
       console.error('Group ID is not set');
-      return; // выход из функции
+      return;
     }
   
     setLoading(true);
@@ -93,7 +122,7 @@ const WeeklySchedule = () => {
 
   const currentDaySchedule = useCallback(async () => {
     setLoading(true);
-    const currentDay = moment().format('ddd'); // Получаем текущий день недели
+    const currentDay = moment().format('ddd');
     setSelectedDate(currentDay);
     await handleDayButtonClick(currentDay);
     setLoading(false);
@@ -121,6 +150,7 @@ const WeeklySchedule = () => {
       setPressed(!pressed);
     };
 
+
     return (
       <View style={[styles.lessonContainer, pressed && styles.pressedContainer]}>
         <View style={styles.lessonDetails}>
@@ -132,14 +162,17 @@ const WeeklySchedule = () => {
           </Text>
           <Text style={styles.info}>{lesson.beginLesson} - {lesson.endLesson}</Text>
         </View>
-        <TouchableOpacity style={styles.iconContainer} onPress={handlePress}>
-          <FontAwesome
-            name="pencil"
-            size={pressed ? 16 : 20}
-            color="black"
-            style={{ opacity: pressed ? 0.5 : 0.2 }}
-          />
-        </TouchableOpacity>
+        {hasNote && (
+          <TouchableOpacity 
+            style={styles.iconContainer} 
+            onPressIn={() => openModal(lesson.auditoriumGUID+ '' + lesson.kindOfWork + '' + lesson.date + '' + lesson.beginLesson, lesson.date, lesson.discipline)}>
+            <FontAwesome
+              name="pencil"
+              size={20}
+              color="black"
+            />
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
@@ -153,6 +186,8 @@ const WeeklySchedule = () => {
         textStyle={styles.buttonGroupText}
         selectedIndex={daysOfWeek.indexOf(selectedDate)}
         disabled={loading}
+        selectedButtonStyle={{backgroundColor: '#ff6347'}}
+        selectedTextStyle={{color: '#fff'}}
       />
       <ScrollView style={styles.scheduleContainer}>
         {loading ? (
@@ -182,10 +217,35 @@ const WeeklySchedule = () => {
         ) : null}
       </ScrollView>
       <View style={styles.navigationContainer}>
-        <FontAwesome.Button name="arrow-circle-left" onPress={previousWeek} />
-        <FontAwesome.Button name="calendar" onPress={currentWeekSchedule} />
-        <FontAwesome.Button name="arrow-circle-right" onPress={nextWeek} />
+        <TouchableOpacity onPress={previousWeek} style={styles.transparentButton}>
+          <FontAwesome 
+            name="arrow-circle-left" 
+            size={30} 
+            color="#ff6347" 
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={currentWeekSchedule} style={styles.transparentButton}>
+          <FontAwesome 
+            name="calendar" 
+            size={30} 
+            color={currentWeek === moment().isoWeek() ? '#ff6347' : 'black'} 
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={nextWeek} style={styles.transparentButton}>
+          <FontAwesome 
+            name="arrow-circle-right" 
+            size={30} 
+            color="#ff6347" 
+          />
+        </TouchableOpacity>
       </View>
+      <ModalScreen 
+        guid={modalGuid} 
+        lessonDate={lessonDate} 
+        lessonName={lessonName}
+        isVisible={isModalVisible} 
+        closeModal={closeModal} 
+      />
     </View>
   );
 };
@@ -195,6 +255,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#fff',
+  },
+  transparentButton: {
+    backgroundColor: 'transparent',
   },
   scheduleContainer: {
     flex: 1,
@@ -244,7 +307,8 @@ const styles = StyleSheet.create({
   navigationContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    paddingLeft: 32,
+    paddingRight: 32,
   },
   buttonGroupContainer: {
     marginBottom: 10,

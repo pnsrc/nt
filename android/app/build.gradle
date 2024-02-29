@@ -85,7 +85,7 @@ android {
 
     namespace 'com.quatum'
     defaultConfig {
-        applicationId 'com.quatum'
+        applicationId 'me.pnsrc89.nt'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

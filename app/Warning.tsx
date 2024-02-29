@@ -1,12 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet } from 'react-native';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View } from '@/components/Themed';
 import LottieView from 'lottie-react-native';
 
 
-export default function ModalScreen() {
+export default function LessonNote() {
   return (
     <View style={styles.container}>
             <LottieView
@@ -18,7 +17,7 @@ export default function ModalScreen() {
         source={require('../assets/lottie/human.json')}
       />
       <Text style={styles.title}>Это альфа версия</Text>
-      <Text style={styles.subtitle}>Это обозначает то, что могут быть грубые ошибки в работе приложения, если вы их заметили отпишитесь мне в лс Telegram</Text>
+      <Text style={styles.subtitle}>Это обозчает то, что могут быть грубые ошибки в работе приложения. Баги отлавливаются в большинстве случае автоматически. Но всеже, не все, если вы нашли баг, то сообщите об этом </Text>
       <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
     </View>
   );
