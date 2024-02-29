@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "me.pnsrc.nt"
+      "package": "com.quatum"
     },
     "web": {
       "bundler": "metro",

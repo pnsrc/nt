@@ -1,4 +1,4 @@
-package me.pnsrc.nt
+package com.quatum
 
 import android.app.Application
 import android.content.res.Configuration
