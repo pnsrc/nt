@@ -177,8 +177,6 @@ const WeeklySchedule = () => {
                 source={require('../../assets/lottie/chill.json')}
               />
               <Text style={styles.emptyScheduleText}>Можно отдохнуть</Text>
-              <Text>Хотя это баг, я скоро его отловлю.</Text>
-              <Text>Если его вы видите при смене недель.</Text>
             </View>
           )
         ) : null}
