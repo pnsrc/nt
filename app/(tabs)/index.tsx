@@ -25,6 +25,7 @@ const WeeklySchedule = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [auditoriumGUID, setAuditoriumGUID] = useState(null); // Добавляем состояние для auditoriumGUID
+  const [showDaySelection, setShowDaySelection] = useState(false);
 
   const openModal = useCallback((guid, date, name) => {
     setModalGuid(guid); // Устанавливаем новый guid для модального окна
@@ -40,17 +41,38 @@ const WeeklySchedule = () => {
     setLessonName('');
   };
 
-  const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  const currentWeekSchedule = useCallback(async () => {
+    setLoading(true);
+    setCurrentWeek(moment().isoWeek());
+    setStartOfWeek(moment().startOf('isoWeek'));
+    const currentDate = new Date().toLocaleDateString('ru', { weekday: 'short' }); // Получаем текущий день недели на русском языке
+    const currentDay = daysOfWeek.find(day => day === currentDate);
+    console.log("currentDay:", currentDay);
+    setSelectedDate(currentDay);
+    await handleDayButtonClick(currentDay);
+    
+    setLoading(false);
+  }, []);
 
+  const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   const previousWeek = useCallback(() => {
     setCurrentWeek(prevWeek => prevWeek - 1);
-    setStartOfWeek(prevStart => prevStart.subtract(7, 'days'));
-  }, []);
+    const newStartOfWeek = startOfWeek.clone().subtract(7, 'days');
+    setStartOfWeek(newStartOfWeek);
+    setShowDaySelection(true); // Показываем надпись "Выберите день недели"
 
+  }, []);
+  
   const nextWeek = useCallback(() => {
     setCurrentWeek(prevWeek => prevWeek + 1);
-    setStartOfWeek(prevStart => prevStart.add(7, 'days'));
+    const newStartOfWeek = startOfWeek.clone().add(7, 'days');
+    setStartOfWeek(newStartOfWeek);
+    setShowDaySelection(true); // Показываем надпись "Выберите день недели"
+
   }, []);
+  
+  
+
 
   useEffect(() => {
     AsyncStorage.getItem('selectedGroup').then(value => {
@@ -71,7 +93,10 @@ const WeeklySchedule = () => {
 
   useEffect(() => {
     if (groupId !== prevGroupId) {
-      handleDayButtonClick('Пн');
+      const currentDate = new Date().toLocaleDateString('ru', { weekday: 'short' }); // Получаем текущий день недели на русском языке
+      const currentDay = daysOfWeek.find(day => day === currentDate);
+      console.log("currentDay:", currentDay);
+      handleDayButtonClick(currentDay);
       setPrevGroupId(groupId);
     }
   }, [groupId]);
@@ -79,6 +104,11 @@ const WeeklySchedule = () => {
   useEffect(() => {
     setStartOfWeek(moment().isoWeek(currentWeek).startOf('isoWeek'));
   }, [currentWeek]);
+
+  useEffect(() => {
+    currentWeekSchedule();
+  }, []);
+  
 
   const getCurrentWeek = () => {
     const startOfWeekFormatted = startOfWeek.format('YYYY.MM.DD');
@@ -88,6 +118,8 @@ const WeeklySchedule = () => {
 
 
   const handleDayButtonClick = async (day) => {
+    setShowDaySelection(false); // Показываем надпись "Выберите день недели"
+
     if (!groupId) {
       console.error('Group ID is not set');
       return;
@@ -133,16 +165,11 @@ const WeeklySchedule = () => {
   }, []);
 
 
-  const currentWeekSchedule = useCallback(async () => {
-    setLoading(true);
-    setCurrentWeek(moment().isoWeek());
-    setStartOfWeek(moment().startOf('isoWeek'));
-    const currentDay = moment().format('ddd');
-    setSelectedDate(currentDay);
-    await handleDayButtonClick(currentDay);
-    setLoading(false);
-  }, []);
-
+  
+  
+  
+  
+  
   const LessonCard = ({ lesson }) => {
     const [pressed, setPressed] = useState(false);
 
@@ -190,31 +217,48 @@ const WeeklySchedule = () => {
         selectedTextStyle={{color: '#fff'}}
       />
       <ScrollView style={styles.scheduleContainer}>
-        {loading ? (
-          <ActivityIndicator size="large" color="#0000ff" />
-        ) : error ? (
-          <Text>{error}</Text>
-        ) : schedule ? (
-          schedule.length > 0 ? (
-            <View>
-              {schedule.map((lesson, index) => (
-                <LessonCard key={index} lesson={lesson} />
-              ))}
-            </View>
-          ) : (
-            <View style={styles.emptyScheduleContainer}>
-              <LottieView
-                autoPlay
-                style={{
-                  width: 200,
-                  height: 200,
-                }}
-                source={require('../../assets/lottie/chill.json')}
-              />
-              <Text style={styles.emptyScheduleText}>Можно отдохнуть</Text>
-            </View>
-          )
-        ) : null}
+      {showDaySelection ? ( 
+  <View style={styles.emptyScheduleContainer}>
+    <LottieView
+      autoPlay
+      style={{
+        width: 200,
+        height: 200,
+      }}
+      source={require('../../assets/lottie/human.json')}
+    />
+    <Text style={styles.emptyScheduleText}>Выберите день недели</Text>
+  </View>
+) : (
+  <ScrollView style={styles.scheduleContainer}>
+    {loading ? (
+      <ActivityIndicator size="large" color="#0000ff" />
+    ) : error ? (
+      <Text>{error}</Text>
+    ) : schedule ? (
+      schedule.length > 0 ? (
+        <View>
+          {schedule.map((lesson, index) => (
+            <LessonCard key={index} lesson={lesson} />
+          ))}
+        </View>
+      ) : (
+        <View style={styles.emptyScheduleContainer}>
+          <LottieView
+            autoPlay
+            style={{
+              width: 200,
+              height: 200,
+            }}
+            source={require('../../assets/lottie/chill.json')}
+          />
+          <Text style={styles.emptyScheduleText}>Можно отдохнуть</Text>
+        </View>
+      )
+    ) : null}
+  </ScrollView>
+)}
+
       </ScrollView>
       <View style={styles.navigationContainer}>
         <TouchableOpacity onPress={previousWeek} style={styles.transparentButton}>

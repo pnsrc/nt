@@ -23,6 +23,7 @@
     "appcenter": "5.0.1",
     "appcenter-analytics": "5.0.1",
     "appcenter-crashes": "5.0.1",
+    "deprecated-react-native-prop-types": "^5.0.0",
     "expo": "~50.0.8",
     "expo-blur": "^12.9.2",
     "expo-document-picker": "^11.10.1",

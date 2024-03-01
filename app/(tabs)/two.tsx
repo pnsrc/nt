@@ -129,8 +129,8 @@ const Dialogs = () => {
       </Modal>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>{versionInfo}</Text>
-        <Text style={styles.footerText}>NT</Text>
+        <Text style={styles.footerText}>codename: quantum</Text>
+        <Text style={styles.footerText}>NT ver: 0.0.2</Text>
         <Text style={styles.footerText}>made by pnsrc with ❤</Text>
       </View>
     </View>
