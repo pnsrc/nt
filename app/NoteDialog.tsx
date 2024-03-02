@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Modal, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 
 const NoteDialog = ({ isVisible, closeModal, note, onDelete }) => {
-  const modalBackgroundStyle = Platform.OS === 'ios' ? styles.centeredView : styles.centeredViewAndroid;
+  const modalBackgroundStyle = Platform.OS === 'android' ? styles.centeredView : styles.centeredViewAndroid;
 
   return (
     <Modal
