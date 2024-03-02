@@ -130,7 +130,7 @@ const Dialogs = () => {
 
       <View style={styles.footer}>
         <Text style={styles.footerText}>codename: quantum</Text>
-        <Text style={styles.footerText}>NT ver: 0.0.2</Text>
+        <Text style={styles.footerText}>Studl ver: 0.0.4</Text>
         <Text style={styles.footerText}>made by pnsrc with ❤</Text>
       </View>
     </View>

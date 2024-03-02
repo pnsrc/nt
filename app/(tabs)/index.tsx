@@ -25,7 +25,7 @@ const WeeklySchedule = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [auditoriumGUID, setAuditoriumGUID] = useState(null); // Добавляем состояние для auditoriumGUID
-
+ 
   const openModal = useCallback((guid, date, name) => {
     setModalGuid(guid); // Устанавливаем новый guid для модального окна
     setLessonDate(date); // Устанавливаем дату урока в модальном окне
@@ -139,10 +139,10 @@ const WeeklySchedule = () => {
     setStartOfWeek(moment().startOf('isoWeek'));
     const currentDay = moment().format('ddd');
     setSelectedDate(currentDay);
-    await handleDayButtonClick(currentDay);
+    await handleDayButtonClick(currentDay); // Загружаем расписание на текущий день
     setLoading(false);
   }, []);
-
+  
   const LessonCard = ({ lesson }) => {
     const [pressed, setPressed] = useState(false);
 

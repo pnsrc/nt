@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, Button, StyleSheet, Platform, Keyboard, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, Modal, StyleSheet, Platform, Keyboard, Image, TouchableOpacity, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BlurView } from 'expo-blur';
@@ -23,14 +23,14 @@ const ModalScreen = ({ isVisible, closeModal, lessonDate, lessonName }) => {
   };
 
   const loadTask = async () => {
-    setIsImageAttached(false); // Сбрасываем состояние при каждом открытии модального окна
+    setIsImageAttached(false);
     try {
       const savedData = await AsyncStorage.getItem(getKey());
       if (savedData !== null) {
         const parsedData = JSON.parse(savedData);
         setTask(parsedData.task);
         setAttachment(parsedData.attachment);
-        setIsImageAttached(!!parsedData.attachment); // Проверяем наличие вложения
+        setIsImageAttached(!!parsedData.attachment);
       } else {
         setTask('');
         setAttachment(null);
@@ -67,7 +67,7 @@ const ModalScreen = ({ isVisible, closeModal, lessonDate, lessonName }) => {
         quality: 1,
       });
   
-      console.log(result); // Добавим эту строку для вывода в консоль результата выбора изображения
+      console.log(result);
   
       if (!result.assets[0].cancelled) {
         setAttachment(result.assets[0].uri);
@@ -103,6 +103,7 @@ const ModalScreen = ({ isVisible, closeModal, lessonDate, lessonName }) => {
   const handleClose = () => {
     closeModal();
   };
+  const modalBackground = Platform.OS === 'android' ? { backgroundColor: '#fff' } : null;
 
   return (
     <Modal
@@ -111,8 +112,8 @@ const ModalScreen = ({ isVisible, closeModal, lessonDate, lessonName }) => {
       onRequestClose={closeModal}
       transparent={true}
     >
-      <BlurView intensity={40} style={styles.absoluteFill}>
-        <BlurView intensity={10} style={styles.blurContainer}>
+    <BlurView intensity={Platform.OS === 'android' ? 0 : 40} style={styles.absoluteFill}>
+      <BlurView intensity={10} style={[styles.blurContainer, modalBackground]}>
           <View style={styles.container}>
             <View style={styles.header}>
               <View>
@@ -143,8 +144,12 @@ const ModalScreen = ({ isVisible, closeModal, lessonDate, lessonName }) => {
               blurOnSubmit={true}
             />
             <View style={styles.buttonContainer}>
-              <Button title="Сохранить" onPress={saveTask} color="#ff6347" />
-              <Button title="Закрыть" onPress={handleClose} color="#ff6347" />
+              <TouchableOpacity onPress={saveTask}>
+                <Ionicons name="save" size={40} color="#ff6347" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleClose}>
+                <Ionicons name="close" size={40} color="#ff6347" />
+              </TouchableOpacity>
             </View>
           </View>
         </BlurView>
@@ -206,7 +211,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     position: 'absolute',
-    top: "5%", // Поднимаем контейнер кнопок вверх экрана
+    top: "5%",
   },
   attachmentImage: {
     width: 100,

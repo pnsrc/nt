@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, Text, Modal, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Modal, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 
 const NoteDialog = ({ isVisible, closeModal, note, onDelete }) => {
+  const modalBackgroundStyle = Platform.OS === 'ios' ? styles.centeredView : styles.centeredViewAndroid;
+
   return (
     <Modal
       visible={isVisible}
-      transparent={true}
       animationType="slide"
       onRequestClose={closeModal}
     >
-      <View style={styles.centeredView}>
+      <View style={modalBackgroundStyle}>
         <View style={styles.modalView}>
           <Text style={styles.title}>{note.lessonName}</Text>
           <Text style={styles.subtitle}>{note.lessonDate}</Text>
@@ -34,6 +35,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  centeredViewAndroid: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
   modalView: {
     backgroundColor: '#fff',
