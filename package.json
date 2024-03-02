@@ -28,6 +28,7 @@
     "expo-blur": "^12.9.2",
     "expo-document-picker": "^11.10.1",
     "expo-font": "~11.10.3",
+    "expo-image-picker": "^14.7.1",
     "expo-linking": "~6.2.2",
     "expo-router": "~3.4.7",
     "expo-splash-screen": "~0.26.4",
@@ -44,6 +45,7 @@
     "react-native-safe-area-context": "4.8.2",
     "react-native-screens": "~3.29.0",
     "react-native-swipeout": "^2.3.6",
+    "react-native-textarea": "^1.0.4",
     "react-native-vector-icons": "^10.0.3",
     "react-native-web": "~0.19.6"
   },

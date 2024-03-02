@@ -36,7 +36,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="note"
         options={{
-          title: '',
+          title: 'Заметки',
+          headerShown: false,
           tabBarIcon: ({ color }) => <TabBarIcon name="sticky-note" color={color} />,
         }}
       />

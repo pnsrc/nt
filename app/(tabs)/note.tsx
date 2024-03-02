@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import Swipeout from 'react-native-swipeout';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import EditModal from '../EditModal';
+import ViewNoteFull from '../ViewNoteFull'; // Предполагается, что ViewNoteFull находится в том же каталоге
 
 const SimpleScreen = () => {
   const [notes, setNotes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedNote, setSelectedNote] = useState(null);
   const [isConfirmationVisible, setIsConfirmationVisible] = useState(false);
+  const [selectedLessonName, setSelectedLessonName] = useState('');
+  const [selectedLessonDate, setSelectedLessonDate] = useState('');
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isViewNoteFullVisible, setIsViewNoteFullVisible] = useState(false);
 
   useEffect(() => {
     const intervalId = setInterval(loadNotes, 2000);
@@ -20,20 +26,21 @@ const SimpleScreen = () => {
     try {
       const savedNotes = await AsyncStorage.getAllKeys();
       const parsedNotes = await Promise.all(savedNotes.map(async (key) => {
+        const [lessonDate, lessonName, attachment] = key.split('_');
         const task = await AsyncStorage.getItem(key);
-        const [lessonDate, lessonName] = key.split('_');
-        return { guid: key, task, lessonDate, lessonName };
+        return { guid: key, task: JSON.parse(task), lessonDate, lessonName, attachment };
       }));
-
-      const filteredNotes = parsedNotes.filter(note => note.lessonName);
+  
+      const filteredNotes = parsedNotes.filter(note => note.lessonName && (!note.attachment || note.attachment === undefined));
       filteredNotes.sort((a, b) => new Date(a.lessonDate) - new Date(b.lessonDate));
       setNotes(filteredNotes);
       setIsLoading(false);
+      console.log(parsedNotes)
     } catch (error) {
       console.error('Error loading notes:', error);
     }
   };
-
+  
   const handleDeleteNote = async (note) => {
     try {
       await AsyncStorage.removeItem(note.guid);
@@ -44,9 +51,21 @@ const SimpleScreen = () => {
     }
   };
 
+  const handleEditNote = (note) => {
+    setSelectedNote(note);
+    setSelectedLessonName(note.lessonName);
+    setSelectedLessonDate(note.lessonDate);
+    setIsEditModalVisible(true);
+  };
+
   const confirmDelete = (note) => {
     setSelectedNote(note);
     setIsConfirmationVisible(true);
+  };
+
+  const handleViewNoteFull = (note) => {
+    setSelectedNote(note);
+    setIsViewNoteFullVisible(true);
   };
 
   return (
@@ -71,26 +90,45 @@ const SimpleScreen = () => {
                 {
                   component: (
                     <TouchableOpacity
+                      style={[styles.editButton, styles.center]}
+                      onPress={() => handleEditNote(note)}
+                      activeOpacity={0.7}
+                      underlayColor="transparent"
+                    >
+                      <Icon name="pencil" size={20} color="blue" />
+                    </TouchableOpacity>
+                  ),
+                  backgroundColor: 'transparent',
+                  onPress: () => handleEditNote(note),
+                },
+                {
+                  component: (
+                    <TouchableOpacity
                       style={[styles.deleteButton, styles.center]}
                       onPress={() => confirmDelete(note)}
-                      activeOpacity={0.7} // Определяем степень прозрачности фона при нажатии
-                      underlayColor="transparent" // Устанавливаем прозрачный фон
+                      activeOpacity={0.7}
+                      underlayColor="transparent"
                     >
                       <Icon name="trash" size={20} color="red" />
                     </TouchableOpacity>
                   ),
-                  backgroundColor: 'transparent', // Устанавливаем прозрачный фон для кнопки
+                  backgroundColor: 'transparent',
                   onPress: () => confirmDelete(note),
                 },
               ]}
               autoClose={true}
               backgroundColor={'transparent'}
             >
-              <TouchableOpacity style={styles.noteContainer} onPress={() => console.log(note.guid)}>
+              <TouchableOpacity style={styles.noteContainer} onPress={() => handleViewNoteFull(note)}>
                 <View style={styles.card}>
-                  <Text style={styles.guid}>{note.lessonName}</Text>
-                  <Text style={styles.lessonDate}>{note.lessonDate}</Text>
-                  <Text style={styles.task}>{note.task}</Text>
+                  <View style={styles.leftContent}>
+                    <Text style={styles.guid}>{note.lessonName}</Text>
+                    <Text style={styles.lessonDate}>{note.lessonDate}</Text>
+                    <Text style={styles.task}>{note.task.task.length > 100 ? note.task.task.substring(0, 100) + '...' : note.task.task}</Text>
+                  </View>
+                  {note.task.attachment && (
+                    <Image source={{ uri: note.task.attachment }} style={styles.attachmentImage} />
+                  )}
                 </View>
               </TouchableOpacity>
             </Swipeout>
@@ -128,6 +166,26 @@ const SimpleScreen = () => {
           </View>
         </View>
       </Modal>
+      <Modal
+        visible={isViewNoteFullVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsViewNoteFullVisible(false)}
+      >
+        <ViewNoteFull
+          visible={isViewNoteFullVisible}
+          closeModal={() => setIsViewNoteFullVisible(false)}
+          note={selectedNote}
+        />
+      </Modal>
+      {/* Модальное окно редактирования заметки */}
+      <EditModal
+        isVisible={isEditModalVisible}
+        closeModal={() => setIsEditModalVisible(false)}
+        note={selectedNote} // Передаем выбранную заметку в EditModal
+        lessonName={selectedLessonName} // Передаем название урока в EditModal
+        lessonDate={selectedLessonDate} // Передаем дату урока в EditModal
+      />
     </View>
   );
 };
@@ -139,6 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   title: {
+    paddingTop: '20%',
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
@@ -150,10 +209,14 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   card: {
+    flexDirection: 'row',
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 10,
     padding: 10,
+  },
+  leftContent: {
+    flex: 1,
   },
   guid: {
     fontWeight: 'bold',
@@ -165,6 +228,23 @@ const styles = StyleSheet.create({
   },
   task: {
     fontSize: 16,
+    flexWrap: 'wrap',
+    marginRight: 10,
+  },
+  rightContent: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: 100, // Ширина изображения
+    resizeMode: 'cover', // Масштабирование изображения
+    borderTopRightRadius: 10, // Скругление правого верхнего угла
+    borderBottomRightRadius: 10, // Скругление правого нижнего угла
+  },
+  attachmentImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
   },
   loaderContainer: {
     flex: 1,
@@ -230,6 +310,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   deleteButton: {
+    width: 60,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  editButton: {
     width: 60,
     height: '100%',
     justifyContent: 'center',
