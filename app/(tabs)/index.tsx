@@ -6,7 +6,6 @@ import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import ModalScreen from '../EditModal'; // импортируем компонент модального окна
-import { useColorScheme } from 'react-native';
 
 const WeeklySchedule = () => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -16,7 +15,8 @@ const WeeklySchedule = () => {
   const [groupId, setGroupId] = useState(null);
   const [prevGroupId, setPrevGroupId] = useState(null);
   const [currentWeek, setCurrentWeek] = useState(moment().isoWeek());
-  
+  const [currentGroupId, setCurrentGroupId] = useState(null);
+
   const [startOfWeek, setStartOfWeek] = useState(moment().startOf('isoWeek'));
 
   const [modalGuid, setModalGuid] = useState('');
@@ -41,56 +41,68 @@ const WeeklySchedule = () => {
     setLessonName('');
   };
 
+  // Функция для загрузки расписания на текущую неделю
   const currentWeekSchedule = useCallback(async () => {
     setLoading(true);
     setCurrentWeek(moment().isoWeek());
     setStartOfWeek(moment().startOf('isoWeek'));
     const currentDay = moment().locale('ru').format('dd');
-    console.log("currentDay:", currentDay);
     setSelectedDate(currentDay);
     await handleDayButtonClick(currentDay);
     setLoading(false);
-  }, []);
-  
+  }, [currentGroupId]); // Включаем currentGroupId в зависимости
+
+  // Функция для обработки нажатия на кнопку "Текущая неделя"
+  const handleCurrentWeekButtonClick = async () => {
+    if (groupId) { // Проверяем наличие ID группы
+      console.log('Группа получена')
+      currentWeekSchedule(); // Вызываем функцию для загрузки расписания текущей недели
+    } else {
+      console.log(groupId);
+      console.error("ID группы не найден");
+    }
+  };
 
   const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  
   const previousWeek = useCallback(() => {
     setCurrentWeek(prevWeek => prevWeek - 1);
     const newStartOfWeek = startOfWeek.clone().subtract(7, 'days');
     setStartOfWeek(newStartOfWeek);
-  }, []);
+  }, [startOfWeek]);
   
   const nextWeek = useCallback(() => {
     setCurrentWeek(prevWeek => prevWeek + 1);
     const newStartOfWeek = startOfWeek.clone().add(7, 'days');
     setStartOfWeek(newStartOfWeek);
-  }, []);
+  }, [startOfWeek]);
   
-  
-
-
   useEffect(() => {
     AsyncStorage.getItem('selectedGroup').then(value => {
+      console.log("Value from AsyncStorage:", value);
       if (value) {
         const parsedValue = JSON.parse(value);
-        setGroupId(parsedValue.id);
-        setPrevGroupId(parsedValue.id);
+        console.log("Parsed value:", parsedValue);
+        if (parsedValue.id) {
+          setGroupId(parsedValue.id);
+          setPrevGroupId(parsedValue.id);
+        } else {
+          console.error("ID группы не найден");
+        }
       }
     });
   }, []);
+  
 
   const hasNote = useCallback((lessonGuid) => {
     const guid = lesson.auditoriumGUID + '_' + lesson.kindOfWork + '_' + lesson.date + '_' + lesson.beginLesson;
     return notes.some(note => note.guid === lessonGuid);
   }, [notes]);
 
-  
-
   useEffect(() => {
     if (groupId !== prevGroupId) {
       const currentDate = new Date().toLocaleDateString('ru', { weekday: 'short' }); // Получаем текущий день недели на русском языке
       const currentDay = daysOfWeek.find(day => day === currentDate);
-      console.log("currentDay:", currentDay);
       handleDayButtonClick(currentDay);
       setPrevGroupId(groupId);
     }
@@ -103,7 +115,6 @@ const WeeklySchedule = () => {
   useEffect(() => {
     currentWeekSchedule();
   }, []);
-  
 
   const getCurrentWeek = () => {
     const startOfWeekFormatted = startOfWeek.format('YYYY.MM.DD');
@@ -111,65 +122,54 @@ const WeeklySchedule = () => {
     return { start: startOfWeekFormatted, end: endOfWeekFormatted };
   };
 
-
   const handleDayButtonClick = async (day) => {
-    if (!groupId) {
-      console.error('Group ID is not set');
-      return;
-    }
-  
     setLoading(true);
     setSelectedDate(day);
   
     try {
       const { start, end } = getCurrentWeek();
-      const response = await fetch(`https://rasp.omgtu.ru/api/schedule/group/${groupId}?start=${start}&finish=${end}&lng=1`);
-      const data = await response.json();
-      console.log("Data from server:");
-      if (Array.isArray(data)) {
-        setSchedule(data.filter(lesson => lesson.dayOfWeekString === day));
-        console.log('very strange')
-      } else {
-        setError('Произошла ошибка при загрузке расписания');
+      const url = `https://rasp.omgtu.ru/api/schedule/group/${groupId}?start=${start}&finish=${end}&lng=1`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error('Ошибка при загрузке расписания');
       }
-      setLoading(false);
+  
+      const data = await response.json();
+  
+      if (Array.isArray(data)) {
+        // Добавим проверку на наличие обязательных полей в каждом элементе расписания
+        if (data.every(lesson => lesson.dayOfWeekString && lesson.discipline && lesson.auditorium)) {
+          const filteredSchedule = data.filter(lesson => lesson.dayOfWeekString === day);
+          console.log('Отфильтрованное расписание:', filteredSchedule); // Добавляем логирование отфильтрованного расписания
+          setSchedule(filteredSchedule);
+          setError(null); // Сброс ошибки, если данные успешно загружены
+        } else {
+          throw new Error('Неправильный формат данных');
+        }
+      } else {
+        throw new Error('Неправильный формат данных');
+      }
     } catch (error) {
-      console.error('Error fetching schedule:', error);
-      setError('Произошла ошибка при загрузке расписания');
+      console.error('Ошибка при загрузке расписания:', error);
+      setError('Выберете текущий день недели');
+    } finally {
       setLoading(false);
     }
 };
+
 
   const renderDayWithDate = (day, index) => {
     const currentDate = startOfWeek.clone().add(index, 'days').format('D');
     return `${day} ${currentDate}`;
   };
 
-  const currentDaySchedule = useCallback(async () => {
-    setLoading(true);
-    const currentDay = moment().format('ddd');
-    console.log(currentDay)
-    await handleDayButtonClick(currentDay);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    currentDaySchedule();
-  }, []);
-
-
-  
-  
-  
-  
-  
   const LessonCard = ({ lesson }) => {
     const [pressed, setPressed] = useState(false);
 
     const handlePress = () => {
       setPressed(!pressed);
     };
-
 
     return (
       <View style={[styles.lessonContainer, pressed && styles.pressedContainer]}>
@@ -244,7 +244,7 @@ const WeeklySchedule = () => {
             color="#ff6347" 
           />
         </TouchableOpacity>
-        <TouchableOpacity onPress={currentWeekSchedule} style={styles.transparentButton}>
+        <TouchableOpacity onPress={handleCurrentWeekButtonClick} style={styles.transparentButton}>
           <FontAwesome 
             name="calendar" 
             size={30} 
