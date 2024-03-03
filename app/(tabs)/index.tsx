@@ -6,6 +6,7 @@ import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import ModalScreen from '../EditModal'; // импортируем компонент модального окна
+import { useColorScheme } from 'react-native';
 
 const WeeklySchedule = () => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -25,7 +26,7 @@ const WeeklySchedule = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [auditoriumGUID, setAuditoriumGUID] = useState(null); // Добавляем состояние для auditoriumGUID
- 
+
   const openModal = useCallback((guid, date, name) => {
     setModalGuid(guid); // Устанавливаем новый guid для модального окна
     setLessonDate(date); // Устанавливаем дату урока в модальном окне
@@ -40,17 +41,33 @@ const WeeklySchedule = () => {
     setLessonName('');
   };
 
-  const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  const currentWeekSchedule = useCallback(async () => {
+    setLoading(true);
+    setCurrentWeek(moment().isoWeek());
+    setStartOfWeek(moment().startOf('isoWeek'));
+    const currentDay = moment().locale('ru').format('dd');
+    console.log("currentDay:", currentDay);
+    setSelectedDate(currentDay);
+    await handleDayButtonClick(currentDay);
+    setLoading(false);
+  }, []);
+  
 
+  const daysOfWeek = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
   const previousWeek = useCallback(() => {
     setCurrentWeek(prevWeek => prevWeek - 1);
-    setStartOfWeek(prevStart => prevStart.subtract(7, 'days'));
+    const newStartOfWeek = startOfWeek.clone().subtract(7, 'days');
+    setStartOfWeek(newStartOfWeek);
   }, []);
-
+  
   const nextWeek = useCallback(() => {
     setCurrentWeek(prevWeek => prevWeek + 1);
-    setStartOfWeek(prevStart => prevStart.add(7, 'days'));
+    const newStartOfWeek = startOfWeek.clone().add(7, 'days');
+    setStartOfWeek(newStartOfWeek);
   }, []);
+  
+  
+
 
   useEffect(() => {
     AsyncStorage.getItem('selectedGroup').then(value => {
@@ -71,7 +88,10 @@ const WeeklySchedule = () => {
 
   useEffect(() => {
     if (groupId !== prevGroupId) {
-      handleDayButtonClick('Пн');
+      const currentDate = new Date().toLocaleDateString('ru', { weekday: 'short' }); // Получаем текущий день недели на русском языке
+      const currentDay = daysOfWeek.find(day => day === currentDate);
+      console.log("currentDay:", currentDay);
+      handleDayButtonClick(currentDay);
       setPrevGroupId(groupId);
     }
   }, [groupId]);
@@ -79,6 +99,11 @@ const WeeklySchedule = () => {
   useEffect(() => {
     setStartOfWeek(moment().isoWeek(currentWeek).startOf('isoWeek'));
   }, [currentWeek]);
+
+  useEffect(() => {
+    currentWeekSchedule();
+  }, []);
+  
 
   const getCurrentWeek = () => {
     const startOfWeekFormatted = startOfWeek.format('YYYY.MM.DD');
@@ -89,7 +114,7 @@ const WeeklySchedule = () => {
 
   const handleDayButtonClick = async (day) => {
     if (!groupId) {
-      console.log('Group ID is not set');
+      console.error('Group ID is not set');
       return;
     }
   
@@ -123,7 +148,7 @@ const WeeklySchedule = () => {
   const currentDaySchedule = useCallback(async () => {
     setLoading(true);
     const currentDay = moment().format('ddd');
-    setSelectedDate(currentDay);
+    console.log(currentDay)
     await handleDayButtonClick(currentDay);
     setLoading(false);
   }, []);
@@ -133,15 +158,10 @@ const WeeklySchedule = () => {
   }, []);
 
 
-  const currentWeekSchedule = useCallback(async () => {
-    setLoading(true);
-    setCurrentWeek(moment().isoWeek());
-    setStartOfWeek(moment().startOf('isoWeek'));
-    const currentDay = moment().format('ddd');
-    setSelectedDate(currentDay);
-    await handleDayButtonClick(currentDay); // Загружаем расписание на текущий день
-    setLoading(false);
-  }, []);
+  
+  
+  
+  
   
   const LessonCard = ({ lesson }) => {
     const [pressed, setPressed] = useState(false);

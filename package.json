@@ -47,7 +47,8 @@
     "react-native-swipeout": "^2.3.6",
     "react-native-textarea": "^1.0.4",
     "react-native-vector-icons": "^10.0.3",
-    "react-native-web": "~0.19.6"
+    "react-native-web": "~0.19.6",
+    "expo-sqlite": "~13.2.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

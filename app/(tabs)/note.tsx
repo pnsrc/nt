@@ -35,7 +35,6 @@ const SimpleScreen = () => {
       filteredNotes.sort((a, b) => new Date(a.lessonDate) - new Date(b.lessonDate));
       setNotes(filteredNotes);
       setIsLoading(false);
-      console.log(parsedNotes)
     } catch (error) {
       console.error('Error loading notes:', error);
     }
